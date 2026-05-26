@@ -140,10 +140,8 @@ package multierr // import "go.uber.org/multierr"
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -202,9 +200,7 @@ type multipleErrors interface {
 // just the error that was passed in.
 //
 // Callers of this function are free to modify the returned slice.
-func Errors(err error) []error {
-	return extractErrors(err)
-}
+func Errors(err error) []error { _ = "STUB: not implemented"; return nil }
 
 // multiError is an error that holds one or more errors.
 //
@@ -221,83 +217,24 @@ type multiError struct {
 // Unwrap returns a list of errors wrapped by this multierr.
 //
 // This satisfies the Go 1.20 multi-error interface.
-func (merr *multiError) Unwrap() []error {
-	return merr.Errors()
-}
+func (merr *multiError) Unwrap() []error { _ = "STUB: not implemented"; return nil }
 
 // Errors returns the list of underlying errors.
 //
 // This slice MUST NOT be modified.
-func (merr *multiError) Errors() []error {
-	if merr == nil {
-		return nil
-	}
-	return merr.errors
-}
+func (merr *multiError) Errors() []error { _ = "STUB: not implemented"; return nil }
 
-func (merr *multiError) Error() string {
-	if merr == nil {
-		return ""
-	}
+func (merr *multiError) Error() string { _ = "STUB: not implemented"; return "" }
 
-	buff := _bufferPool.Get().(*bytes.Buffer)
-	buff.Reset()
+func (merr *multiError) Format(f fmt.State, c rune) { _ = "STUB: not implemented"; return }
 
-	merr.writeSingleline(buff)
+func (merr *multiError) writeSingleline(w io.Writer) { _ = "STUB: not implemented"; return }
 
-	result := buff.String()
-	_bufferPool.Put(buff)
-	return result
-}
-
-func (merr *multiError) Format(f fmt.State, c rune) {
-	if c == 'v' && f.Flag('+') {
-		merr.writeMultiline(f)
-	} else {
-		merr.writeSingleline(f)
-	}
-}
-
-func (merr *multiError) writeSingleline(w io.Writer) {
-	first := true
-	for _, item := range merr.errors {
-		if first {
-			first = false
-		} else {
-			w.Write(_singlelineSeparator)
-		}
-		io.WriteString(w, item.Error())
-	}
-}
-
-func (merr *multiError) writeMultiline(w io.Writer) {
-	w.Write(_multilinePrefix)
-	for _, item := range merr.errors {
-		w.Write(_multilineSeparator)
-		writePrefixLine(w, _multilineIndent, fmt.Sprintf("%+v", item))
-	}
-}
+func (merr *multiError) writeMultiline(w io.Writer) { _ = "STUB: not implemented"; return }
 
 // Writes s to the writer with the given prefix added before each line after
 // the first.
-func writePrefixLine(w io.Writer, prefix []byte, s string) {
-	first := true
-	for len(s) > 0 {
-		if first {
-			first = false
-		} else {
-			w.Write(prefix)
-		}
-
-		idx := strings.IndexByte(s, '\n')
-		if idx < 0 {
-			idx = len(s) - 1
-		}
-
-		io.WriteString(w, s[:idx+1])
-		s = s[idx+1:]
-	}
-}
+func writePrefixLine(w io.Writer, prefix []byte, s string) { _ = "STUB: not implemented"; return }
 
 type inspectResult struct {
 	// Number of top-level non-nil errors
@@ -317,71 +254,23 @@ type inspectResult struct {
 // Inspects the given slice of errors so that we can efficiently allocate
 // space for it.
 func inspect(errors []error) (res inspectResult) {
-	first := true
-	for i, err := range errors {
-		if err == nil {
-			continue
-		}
-
-		res.Count++
-		if first {
-			first = false
-			res.FirstErrorIdx = i
-		}
-
-		if merr, ok := err.(*multiError); ok {
-			res.Capacity += len(merr.errors)
-			res.ContainsMultiError = true
-		} else {
-			res.Capacity++
-		}
-	}
-	return
+	_ = "STUB: not implemented"
+	return *new(inspectResult)
 }
 
 // fromSlice converts the given list of errors into a single error.
 func fromSlice(errors []error) error {
+	_ = "STUB: not implemented"
 	// Don't pay to inspect small slices.
-	switch len(errors) {
-	case 0:
-		return nil
-	case 1:
-		return errors[0]
-	}
-
-	res := inspect(errors)
-	switch res.Count {
-	case 0:
-		return nil
-	case 1:
-		// only one non-nil entry
-		return errors[res.FirstErrorIdx]
-	case len(errors):
-		if !res.ContainsMultiError {
-			// Error list is flat. Make a copy of it
-			// Otherwise "errors" escapes to the heap
-			// unconditionally for all other cases.
-			// This lets us optimize for the "no errors" case.
-			out := append(([]error)(nil), errors...)
-			return &multiError{errors: out}
-		}
-	}
-
-	nonNilErrs := make([]error, 0, res.Capacity)
-	for _, err := range errors[res.FirstErrorIdx:] {
-		if err == nil {
-			continue
-		}
-
-		if nested, ok := err.(*multiError); ok {
-			nonNilErrs = append(nonNilErrs, nested.errors...)
-		} else {
-			nonNilErrs = append(nonNilErrs, err)
-		}
-	}
-
-	return &multiError{errors: nonNilErrs}
+	return nil
 }
+
+// only one non-nil entry
+
+// Error list is flat. Make a copy of it
+// Otherwise "errors" escapes to the heap
+// unconditionally for all other cases.
+// This lets us optimize for the "no errors" case.
 
 // Combine combines the passed errors into a single error.
 //
@@ -414,9 +303,7 @@ func fromSlice(errors []error) error {
 // formatted with %+v.
 //
 //	fmt.Sprintf("%+v", multierr.Combine(err1, err2))
-func Combine(errors ...error) error {
-	return fromSlice(errors)
-}
+func Combine(errors ...error) error { _ = "STUB: not implemented"; return nil }
 
 // Append appends the given errors together. Either value may be nil.
 //
@@ -436,31 +323,15 @@ func Combine(errors ...error) error {
 //
 // Note that the variable MUST be a named return to append an error to it from
 // the defer statement. See also [AppendInvoke].
-func Append(left error, right error) error {
-	switch {
-	case left == nil:
-		return right
-	case right == nil:
-		return left
-	}
+func Append(left error, right error) error { _ = "STUB: not implemented"; return nil }
 
-	if _, ok := right.(*multiError); !ok {
-		if l, ok := left.(*multiError); ok && !l.copyNeeded.Swap(true) {
-			// Common case where the error on the left is constantly being
-			// appended to.
-			errs := append(l.errors, right)
-			return &multiError{errors: errs}
-		} else if !ok {
-			// Both errors are single errors.
-			return &multiError{errors: []error{left, right}}
-		}
-	}
+// Common case where the error on the left is constantly being
+// appended to.
 
-	// Either right or both, left and right, are multiErrors. Rely on usual
-	// expensive logic.
-	errors := [2]error{left, right}
-	return fromSlice(errors[0:])
-}
+// Both errors are single errors.
+
+// Either right or both, left and right, are multiErrors. Rely on usual
+// expensive logic.
 
 // AppendInto appends an error into the destination of an error pointer and
 // returns whether the error being appended was non-nil.
@@ -497,46 +368,23 @@ func Append(left error, right error) error {
 //		items = append(items, item)
 //	}
 func AppendInto(into *error, err error) (errored bool) {
-	if into == nil {
-		// We panic if 'into' is nil. This is not documented above
-		// because suggesting that the pointer must be non-nil may
-		// confuse users into thinking that the error that it points
-		// to must be non-nil.
-		panic("misuse of multierr.AppendInto: into pointer must not be nil")
-	}
+	_ = "STUB: not implemented"
 
-	if err == nil {
-		return false
-	}
-	*into = Append(*into, err)
-	return true
+	// We panic if 'into' is nil. This is not documented above
+	// because suggesting that the pointer must be non-nil may
+	// confuse users into thinking that the error that it points
+	// to must be non-nil.
+	return false
 }
 
 // Every compares every error in the given err against the given target error
 // using [errors.Is], and returns true only if every comparison returned true.
-func Every(err error, target error) bool {
-	for _, e := range extractErrors(err) {
-		if !errors.Is(e, target) {
-			return false
-		}
-	}
-	return true
-}
+func Every(err error, target error) bool { _ = "STUB: not implemented"; return false }
 
-func extractErrors(err error) []error {
-	if err == nil {
-		return nil
-	}
+func extractErrors(err error) []error { _ = "STUB: not implemented"; return nil }
 
-	// check if the given err is an Unwrapable error that
-	// implements multipleErrors interface.
-	eg, ok := err.(multipleErrors)
-	if !ok {
-		return []error{err}
-	}
-
-	return append(([]error)(nil), eg.Unwrap()...)
-}
+// check if the given err is an Unwrapable error that
+// implements multipleErrors interface.
 
 // Invoker is an operation that may fail with an error. Use it with
 // AppendInvoke to append the result of calling the function into an error.
@@ -572,32 +420,34 @@ type Invoker interface {
 type Invoke func() error
 
 // Invoke calls the supplied function and returns its result.
-func (i Invoke) Invoke() error { return i() }
+func (i Invoke) Invoke() error {
+	_ = "STUB: not implemented"
 
-// Close builds an Invoker that closes the provided io.Closer. Use it with
-// AppendInvoke to close io.Closers and append their results into an error.
-//
-// For example,
-//
-//	func processFile(path string) (err error) {
-//		f, err := os.Open(path)
-//		if err != nil {
-//			return err
-//		}
-//		defer multierr.AppendInvoke(&err, multierr.Close(f))
-//		return processReader(f)
-//	}
-//
-// In this example, multierr.Close will construct the Invoker right away, but
-// defer the invocation of f.Close until the function returns.
-//
-//	defer multierr.AppendInvoke(&err, multierr.Close(f))
-//
-// Note that the error you're appending to from the defer statement MUST be a
-// named return.
-func Close(closer io.Closer) Invoker {
-	return Invoke(closer.Close)
+	// Close builds an Invoker that closes the provided io.Closer. Use it with
+	// AppendInvoke to close io.Closers and append their results into an error.
+	//
+	// For example,
+	//
+	//	func processFile(path string) (err error) {
+	//		f, err := os.Open(path)
+	//		if err != nil {
+	//			return err
+	//		}
+	//		defer multierr.AppendInvoke(&err, multierr.Close(f))
+	//		return processReader(f)
+	//	}
+	//
+	// In this example, multierr.Close will construct the Invoker right away, but
+	// defer the invocation of f.Close until the function returns.
+	//
+	//	defer multierr.AppendInvoke(&err, multierr.Close(f))
+	//
+	// Note that the error you're appending to from the defer statement MUST be a
+	// named return.
+	return nil
 }
+
+func Close(closer io.Closer) Invoker { _ = "STUB: not implemented"; return *new(Invoker) }
 
 // AppendInvoke appends the result of calling the given Invoker into the
 // provided error pointer. Use it with named returns to safely defer
@@ -652,9 +502,7 @@ func Close(closer io.Closer) Invoker {
 //
 // multierr provides a few Invoker implementations out of the box for
 // convenience. See [Invoker] for more information.
-func AppendInvoke(into *error, invoker Invoker) {
-	AppendInto(into, invoker.Invoke())
-}
+func AppendInvoke(into *error, invoker Invoker) { _ = "STUB: not implemented"; return }
 
 // AppendFunc is a shorthand for [AppendInvoke].
 // It allows using function or method value directly
@@ -671,6 +519,4 @@ func AppendInvoke(into *error, invoker Invoker) {
 //		// returned error.
 //		defer multierr.AppendFunc(&err, w.Stop)
 //	}
-func AppendFunc(into *error, fn func() error) {
-	AppendInvoke(into, Invoke(fn))
-}
+func AppendFunc(into *error, fn func() error) { _ = "STUB: not implemented"; return }
